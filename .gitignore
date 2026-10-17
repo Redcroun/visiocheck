@@ -1,0 +1,23 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# --- Environnement virtuel ---
+.venv/
+
+# --- Données générées (journal CSV, photos NOK) ---
+# On ignore tout le contenu de data/ sauf le .gitkeep et un éventuel dossier d'exemples
+data/*
+!data/.gitkeep
+!data/exemples/
+
+# --- Éditeur VS Code (on garde seulement les réglages partageables) ---
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# --- Système ---
+Thumbs.db
+desktop.ini
+.DS_Store
