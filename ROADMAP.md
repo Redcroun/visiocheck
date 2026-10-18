@@ -50,11 +50,11 @@ C'est l'analogie directe d'un contrôle présence/absence ou d'un détrompage su
 Chaque phase se termine par un **commit Git** et une coche ici.
 
 ### Phase 0 — Mise en place (1 soirée)
-- [ ] Installer Python 3.12, Git, VS Code (extension Python)
-- [ ] Créer le dépôt GitHub `visiocheck` (public), le cloner
-- [ ] Créer l'environnement virtuel `.venv` et `requirements.txt`
-- [ ] Script `scripts/test_camera.py` : afficher le flux webcam, quitter avec `q`
-- [ ] Premier commit
+- [x] Installer Python 3.12, Git, VS Code (extension Python)
+- [x] Créer le dépôt GitHub `visiocheck` (public), le cloner
+- [x] Créer l'environnement virtuel `.venv` et `requirements.txt`
+- [x] Script `scripts/test_camera.py` : afficher le flux webcam, quitter avec `q`
+- [x] Premier commit
 
 **Ce que j'apprends** : environnement Python, Git, capture vidéo OpenCV.
 

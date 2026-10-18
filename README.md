@@ -18,7 +18,7 @@ _À compléter._
 
 ## Installation
 ```powershell
-python -m venv .venv
+py -3.12 -m venv .venv    # forcer Python 3.12 si plusieurs versions sont installées
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
