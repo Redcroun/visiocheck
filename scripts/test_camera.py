@@ -14,6 +14,12 @@ import cv2
 
 NOM_FENETRE = "VisioCheck - test camera"
 
+# Format vidéo demandé à la webcam.
+# True  : MJPG (images compressées) -> souvent bien plus de FPS en USB.
+# False : format par défaut de la caméra (souvent YUY2, non compressé).
+# Passe à False pour comparer les FPS avant / après.
+UTILISER_MJPG = True
+
 
 def lire_index_camera():
     """Renvoie l'index de caméra passé en argument, ou 0 par défaut."""
@@ -34,10 +40,29 @@ def ouvrir_camera(index):
     return camera
 
 
+def demander_mjpg(camera):
+    """Demande à la caméra d'envoyer ses images au format compressé MJPG."""
+    # Un « FOURCC » est un code de 4 lettres qui désigne un format vidéo.
+    camera.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
+
+
+def decrire_format(camera):
+    """Renvoie un texte décrivant le format réellement utilisé par la caméra."""
+    code = int(camera.get(cv2.CAP_PROP_FOURCC))
+    # Le code est un nombre qui contient 4 lettres : on les extrait une par une.
+    lettres = "".join(chr((code >> 8 * i) & 0xFF) for i in range(4))
+    largeur = int(camera.get(cv2.CAP_PROP_FRAME_WIDTH))
+    hauteur = int(camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    return f"format {lettres}, {largeur}x{hauteur}"
+
+
 def main():
     index = lire_index_camera()
     camera = ouvrir_camera(index)
-    print("Caméra ouverte. Appuie sur q dans la fenêtre vidéo pour quitter.")
+    if UTILISER_MJPG:
+        demander_mjpg(camera)
+    print(f"Caméra ouverte ({decrire_format(camera)}).")
+    print("Appuie sur q dans la fenêtre vidéo pour quitter.")
 
     instant_precedent = time.perf_counter()
     fps = 0.0
@@ -65,6 +90,7 @@ def main():
         if cv2.getWindowProperty(NOM_FENETRE, cv2.WND_PROP_VISIBLE) < 1:
             break
 
+    print(f"FPS moyen en fin de test : {fps:.1f}")
     camera.release()
     cv2.destroyAllWindows()
     print("Caméra libérée, fin du test.")
