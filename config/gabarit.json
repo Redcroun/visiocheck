@@ -1,3 +1,8 @@
 {
-  "zones": []
+  "zones": [
+    {"nom": "Z1", "x": 100, "y": 120, "largeur": 100, "hauteur": 100, "couleur_attendue": "rouge"},
+    {"nom": "Z2", "x": 220, "y": 120, "largeur": 100, "hauteur": 100, "couleur_attendue": "jaune"},
+    {"nom": "Z3", "x": 340, "y": 120, "largeur": 100, "hauteur": 100, "couleur_attendue": "vert"},
+    {"nom": "Z4", "x": 460, "y": 120, "largeur": 100, "hauteur": 100, "couleur_attendue": "bleu"}
+  ]
 }

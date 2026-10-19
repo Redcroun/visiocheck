@@ -1,0 +1,14 @@
+{
+  "camera": {
+    "index": 0,
+    "utiliser_mjpg": true
+  },
+  "detection": {
+    "seuil_presence": 0.30,
+    "taille_flou": 5
+  },
+  "journal": {
+    "fichier_csv": "data/controles.csv",
+    "dossier_nok": "data/nok"
+  }
+}
