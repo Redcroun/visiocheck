@@ -53,7 +53,8 @@ def obtenir_image_de_reference():
         return image
 
     reglages = configuration.charger_reglages()
-    camera = ouvrir_camera(reglages["camera"]["index"], reglages["camera"]["utiliser_mjpg"])
+    camera = ouvrir_camera(reglages["camera"]["index"], reglages["camera"]["utiliser_mjpg"],
+                           reglages["camera"]["backend"])
     print("Place le gabarit sous la caméra, puis appuie sur espace pour figer l'image.")
     while True:
         image = lire_image(camera)

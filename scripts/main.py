@@ -67,7 +67,8 @@ def main():
             sys.exit(1)
     else:
         try:
-            camera = ouvrir_camera(reglages["camera"]["index"], reglages["camera"]["utiliser_mjpg"])
+            camera = ouvrir_camera(reglages["camera"]["index"], reglages["camera"]["utiliser_mjpg"],
+                                   reglages["camera"]["backend"])
         except RuntimeError as erreur:
             print(f"Erreur : {erreur}")
             sys.exit(1)

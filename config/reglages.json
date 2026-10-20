@@ -1,7 +1,8 @@
 {
   "camera": {
-    "index": 0,
-    "utiliser_mjpg": true
+    "index": 1,
+    "utiliser_mjpg": true,
+    "backend": "MSMF"
   },
   "detection": {
     "seuil_presence": 0.30,
