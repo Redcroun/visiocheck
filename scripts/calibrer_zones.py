@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import cv2
 
 from visiocheck import affichage, configuration
-from visiocheck.camera import lire_image, ouvrir_camera
+from visiocheck.camera import lire_image, liberer, ouvrir_source
 
 NOM_FENETRE = "VisioCheck - calibrage des zones"
 
@@ -45,16 +45,11 @@ def gerer_souris(evenement, x, y, drapeaux, parametre):
 
 def obtenir_image_de_reference():
     """Renvoie l'image sur laquelle on dessine : fichier en argument, ou webcam figée."""
-    if len(sys.argv) > 1:
-        image = cv2.imread(sys.argv[1])
-        if image is None:
-            print(f"Erreur : impossible de lire l'image {sys.argv[1]}")
-            sys.exit(1)
-        return image
-
     reglages = configuration.charger_reglages()
-    camera = ouvrir_camera(reglages["camera"]["index"], reglages["camera"]["utiliser_mjpg"],
-                           reglages["camera"]["backend"])
+    image_fichier, camera = ouvrir_source(sys.argv[1:], reglages["camera"])
+    if image_fichier is not None:
+        return image_fichier
+
     print("Place le gabarit sous la caméra, puis appuie sur espace pour figer l'image.")
     while True:
         image = lire_image(camera)
@@ -62,7 +57,7 @@ def obtenir_image_de_reference():
         affichage.ecrire(apercu, "espace : figer l'image", (10, 25))
         cv2.imshow(NOM_FENETRE, apercu)
         if cv2.waitKey(30) & 0xFF == ord(" "):
-            camera.release()
+            liberer(camera)
             return image
 
 
@@ -113,4 +108,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except RuntimeError as erreur:
+        print(f"Erreur : {erreur}")
+        sys.exit(1)

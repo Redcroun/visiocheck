@@ -40,3 +40,30 @@ def charger_reglages():
 def chemin_projet(chemin_relatif):
     """Transforme un chemin relatif à la racine du projet en chemin absolu."""
     return RACINE / chemin_relatif
+
+
+def verifier_gabarit(zones, couleurs, largeur_image, hauteur_image):
+    """Vérifie que le gabarit est cohérent avec les couleurs connues et la taille de l'image.
+
+    Renvoie la liste des problèmes trouvés, en phrases claires (liste vide si tout va bien).
+    """
+    if not zones:
+        return ["Le gabarit ne contient aucune zone : lance scripts/calibrer_zones.py."]
+
+    problemes = []
+    for zone in zones:
+        nom = zone["nom"]
+        if zone["couleur_attendue"] not in couleurs:
+            problemes.append(
+                f"Zone {nom} : couleur attendue « {zone['couleur_attendue']} » inconnue "
+                f"(couleurs possibles : {', '.join(couleurs)}).")
+        if zone["largeur"] <= 0 or zone["hauteur"] <= 0:
+            problemes.append(f"Zone {nom} : largeur et hauteur doivent être positives.")
+        sort_de_l_image = (zone["x"] < 0 or zone["y"] < 0
+                           or zone["x"] + zone["largeur"] > largeur_image
+                           or zone["y"] + zone["hauteur"] > hauteur_image)
+        if sort_de_l_image:
+            problemes.append(
+                f"Zone {nom} : sort de l'image ({largeur_image}x{hauteur_image}). "
+                "La caméra a peut-être changé de résolution : recalibre avec scripts/calibrer_zones.py.")
+    return problemes

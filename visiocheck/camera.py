@@ -35,3 +35,38 @@ def lire_image(camera):
     if not lecture_ok:
         raise RuntimeError("La caméra ne renvoie plus d'image.")
     return image
+
+
+def charger_image_fichier(chemin):
+    """Lit une image depuis un fichier ; lève une erreur claire si c'est impossible."""
+    image = cv2.imread(str(chemin))
+    if image is None:
+        raise RuntimeError(f"Impossible de lire l'image {chemin} (chemin ou format incorrect).")
+    return image
+
+
+def ouvrir_source(arguments, reglages_camera):
+    """Choisit la source d'images des scripts.
+
+    - un chemin d'image est passé en argument -> on travaille sur ce fichier ;
+    - sinon -> on ouvre la caméra décrite dans config/reglages.json.
+    Renvoie (image_fichier, camera) : l'un des deux vaut None.
+    """
+    if arguments:
+        return charger_image_fichier(arguments[0]), None
+    camera = ouvrir_camera(reglages_camera["index"], reglages_camera["utiliser_mjpg"],
+                           reglages_camera["backend"])
+    return None, camera
+
+
+def image_suivante(image_fichier, camera):
+    """Renvoie l'image à traiter : l'image fichier (toujours la même) ou une nouvelle image caméra."""
+    if image_fichier is not None:
+        return image_fichier
+    return lire_image(camera)
+
+
+def liberer(camera):
+    """Libère la caméra si elle a été ouverte (rien à faire pour une image fichier)."""
+    if camera is not None:
+        camera.release()

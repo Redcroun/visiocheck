@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import cv2
 
 from visiocheck import affichage, configuration, detection, journal
-from visiocheck.camera import lire_image, ouvrir_camera
+from visiocheck.camera import image_suivante, liberer, ouvrir_source
 
 NOM_FENETRE = "VisioCheck"
 AIDE = "espace : controler   r : direct   q : quitter"
@@ -57,27 +57,22 @@ def main():
     reglages = configuration.charger_reglages()
     compteurs = {"OK": 0, "NOK": 0}
 
-    # Source d'images : un fichier passé en argument, sinon la webcam.
-    image_fichier = None
-    camera = None
-    if len(sys.argv) > 1:
-        image_fichier = cv2.imread(sys.argv[1])
-        if image_fichier is None:
-            print(f"Erreur : impossible de lire l'image {sys.argv[1]}")
-            sys.exit(1)
-    else:
-        try:
-            camera = ouvrir_camera(reglages["camera"]["index"], reglages["camera"]["utiliser_mjpg"],
-                                   reglages["camera"]["backend"])
-        except RuntimeError as erreur:
-            print(f"Erreur : {erreur}")
-            sys.exit(1)
+    # Source d'images : un fichier passé en argument, sinon la caméra.
+    image_fichier, camera = ouvrir_source(sys.argv[1:], reglages["camera"])
+
+    # On vérifie le gabarit sur une 1re image : couleurs connues, zones dans l'image.
+    premiere_image = image_suivante(image_fichier, camera)
+    hauteur, largeur = premiere_image.shape[:2]
+    problemes = configuration.verifier_gabarit(zones, couleurs, largeur, hauteur)
+    if problemes:
+        liberer(camera)
+        raise RuntimeError("config/gabarit.json est incorrect :\n- " + "\n- ".join(problemes))
 
     print("VisioCheck démarré. " + AIDE)
     resultat_affiche = None  # image annotée du dernier contrôle, figée à l'écran
 
     while True:
-        image = image_fichier if image_fichier is not None else lire_image(camera)
+        image = image_suivante(image_fichier, camera)
 
         if resultat_affiche is not None:
             ecran = resultat_affiche.copy()
@@ -95,12 +90,15 @@ def main():
         if touche == ord("r"):
             resultat_affiche = None
 
-    if camera is not None:
-        camera.release()
+    liberer(camera)
     cv2.destroyAllWindows()
     total = compteurs["OK"] + compteurs["NOK"]
     print(f"Fin : {total} contrôle(s), {compteurs['OK']} OK, {compteurs['NOK']} NOK.")
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except RuntimeError as erreur:
+        print(f"Erreur : {erreur}")
+        sys.exit(1)

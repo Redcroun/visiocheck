@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import cv2
 
 from visiocheck import affichage, configuration
-from visiocheck.camera import lire_image, ouvrir_camera
+from visiocheck.camera import image_suivante, liberer, ouvrir_source
 
 NOM_FENETRE = "VisioCheck - pipette HSV"
 DEMI_COTE = 2  # carré de 5x5 pixels : 2 pixels de chaque côté du point cliqué
@@ -45,17 +45,8 @@ def gerer_souris(evenement, x, y, drapeaux, parametre):
 
 
 def main():
-    camera = None
-    image_fichier = None
-    if len(sys.argv) > 1:
-        image_fichier = cv2.imread(sys.argv[1])
-        if image_fichier is None:
-            print(f"Erreur : impossible de lire l'image {sys.argv[1]}")
-            sys.exit(1)
-    else:
-        reglages = configuration.charger_reglages()
-        camera = ouvrir_camera(reglages["camera"]["index"], reglages["camera"]["utiliser_mjpg"],
-                           reglages["camera"]["backend"])
+    reglages = configuration.charger_reglages()
+    image_fichier, camera = ouvrir_source(sys.argv[1:], reglages["camera"])
 
     cv2.namedWindow(NOM_FENETRE)
     cv2.setMouseCallback(NOM_FENETRE, gerer_souris)
@@ -63,7 +54,7 @@ def main():
     print("Rappel : dans OpenCV, H va de 0 à 179 (et non 0 à 360), S et V de 0 à 255.")
 
     while True:
-        etat["image"] = image_fichier if image_fichier is not None else lire_image(camera)
+        etat["image"] = image_suivante(image_fichier, camera)
         ecran = etat["image"].copy()
         if etat["mesure"] is not None:
             x, y, h, s, v = etat["mesure"]
@@ -73,10 +64,13 @@ def main():
         if cv2.waitKey(30) & 0xFF == ord("q"):
             break
 
-    if camera is not None:
-        camera.release()
+    liberer(camera)
     cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except RuntimeError as erreur:
+        print(f"Erreur : {erreur}")
+        sys.exit(1)
