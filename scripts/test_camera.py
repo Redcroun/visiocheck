@@ -2,7 +2,7 @@
 
 Utilisation (PowerShell, venv activé) :
     python scripts/test_camera.py        # caméra n°0
-    python scripts/test_camera.py 1      # autre caméra (ex. webcam USB)
+    python scripts/test_camera.py 1      # autre caméra (ex. iPhone via DroidCam)
 
 Touche q : quitter.
 """
@@ -20,6 +20,11 @@ NOM_FENETRE = "VisioCheck - test camera"
 # Passe à False pour comparer les FPS avant / après.
 UTILISER_MJPG = True
 
+# Système vidéo de Windows utilisé par OpenCV pour ouvrir la caméra.
+# cv2.CAP_DSHOW : DirectShow, ancien système, ouvre vite la webcam intégrée.
+# cv2.CAP_MSMF  : Media Foundation, plus récent ; nécessaire pour l'iPhone via DroidCam.
+BACKEND_CAMERA = cv2.CAP_MSMF
+
 
 def lire_index_camera():
     """Renvoie l'index de caméra passé en argument, ou 0 par défaut."""
@@ -30,8 +35,7 @@ def lire_index_camera():
 
 def ouvrir_camera(index):
     """Ouvre la caméra ; arrête le programme avec un message clair en cas d'échec."""
-    # CAP_DSHOW (DirectShow) : sous Windows, la webcam s'ouvre souvent bien plus vite ainsi.
-    camera = cv2.VideoCapture(index, cv2.CAP_DSHOW)
+    camera = cv2.VideoCapture(index, BACKEND_CAMERA)
     if not camera.isOpened():
         print(f"Erreur : impossible d'ouvrir la caméra n°{index}.")
         print("- Vérifie qu'elle est branchée et qu'aucune autre appli (Teams, Zoom…) ne l'utilise.")
