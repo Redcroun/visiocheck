@@ -15,6 +15,7 @@ import cv2
 import numpy as np
 
 from visiocheck import configuration
+from visiocheck.journal import ecrire_image
 
 # Couleurs « pures » en BGR pour dessiner les pièces virtuelles.
 COULEURS_BGR = {
@@ -56,10 +57,14 @@ def main():
     else:
         defauts[zones[-1]["nom"]] = "bleu"
 
-    cv2.imwrite(str(dossier / "demo_ok.png"), dessiner_gabarit(zones, tout_bon))
-    cv2.imwrite(str(dossier / "demo_nok.png"), dessiner_gabarit(zones, defauts))
+    ecrire_image(dossier / "demo_ok.png", dessiner_gabarit(zones, tout_bon))
+    ecrire_image(dossier / "demo_nok.png", dessiner_gabarit(zones, defauts))
     print(f"Images créées dans {dossier} : demo_ok.png et demo_nok.png")
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except RuntimeError as erreur:
+        print(f"Erreur : {erreur}")
+        sys.exit(1)

@@ -5,11 +5,19 @@ Lancer : python -m pytest
 
 import cv2
 import numpy as np
+import pytest
 
 from visiocheck import detection, journal
-from visiocheck.configuration import charger_couleurs
 
-COULEURS = charger_couleurs()
+# Plages HSV propres aux tests : elles ne dépendent pas de config/couleurs.json.
+# Tu peux donc régler config/couleurs.json pour ta caméra sans casser les tests.
+COULEURS = {
+    "rouge": {"plages": [{"min": [0, 100, 70], "max": [10, 255, 255]},
+                         {"min": [170, 100, 70], "max": [179, 255, 255]}]},
+    "jaune": {"plages": [{"min": [20, 100, 100], "max": [35, 255, 255]}]},
+    "vert": {"plages": [{"min": [40, 70, 50], "max": [85, 255, 255]}]},
+    "bleu": {"plages": [{"min": [95, 100, 50], "max": [130, 255, 255]}]},
+}
 SEUIL = 0.30
 
 ZONES = [
@@ -82,7 +90,7 @@ def test_journal_et_synthese(tmp_path):
 
     lignes = journal.lire_journal(chemin)
     assert len(lignes) == 3
-    assert lignes[1]["zones_en_defaut"] == "Z2;Z3"
+    assert lignes[1]["zones_en_defaut"] == "Z2,Z3"
 
     synthese = journal.calculer_synthese(lignes)
     assert synthese["total"] == 3
@@ -90,3 +98,18 @@ def test_journal_et_synthese(tmp_path):
     assert round(synthese["taux_conformite"]) == 33
     assert synthese["top_zones"][0] == ("Z2", 2)
     assert synthese["par_heure"]["14h"] == {"total": 2, "OK": 1}
+
+
+def test_journal_utilise_le_point_virgule_pour_excel(tmp_path):
+    chemin = tmp_path / "controles.csv"
+    journal.enregistrer_controle(chemin, controler({"Z1": "rouge", "Z2": None, "Z3": "bleu"}),
+                                 "2026-10-20 19:00:00")
+    premiere_ligne = chemin.read_text(encoding="utf-8-sig").splitlines()[0]
+    assert premiere_ligne == "horodatage;verdict_global;zones_en_defaut;detail"
+
+
+def test_echec_d_ecriture_d_image_est_signale(tmp_path):
+    # Dossier inexistant : cv2.imwrite renvoie False au lieu de planter.
+    chemin = tmp_path / "dossier_absent" / "photo.jpg"
+    with pytest.raises(RuntimeError):
+        journal.ecrire_image(chemin, np.zeros((10, 10, 3), dtype=np.uint8))
