@@ -54,6 +54,10 @@ py -3.12 -m venv .venv    # forcer Python 3.12 si plusieurs versions sont instal
 pip install -r requirements.txt
 ```
 
+**Choix de la caméra** dans `config/reglages.json` :
+- webcam intégrée : `"index": 0`, `"backend": "DSHOW"` ;
+- iPhone via DroidCam (réglage actuel) : `"index": 1`, `"backend": "MSMF"`.
+
 ## Utilisation
 Essai sans webcam :
 ```powershell
@@ -61,6 +65,11 @@ python scripts/creer_images_demo.py
 python scripts/main.py data/exemples/demo_nok.png
 ```
 Avec la webcam :
+
+Gabarit de référence à imprimer : `docs/gabarit_visiocheck_3_postit_A4.pdf`
+(A4 paysage, à 100 %, la règle doit mesurer 10 cm). Il compte 3 emplacements pour
+Post-it 76 x 76 mm : Z1 jaune, Z2 vert, Z3 bleu.
+
 ```powershell
 python scripts/hsv_picker.py        # 1. vérifier les couleurs, ajuster config/couleurs.json
 python scripts/calibrer_zones.py    # 2. dessiner les zones du gabarit

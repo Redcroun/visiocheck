@@ -105,7 +105,7 @@ def test_journal_utilise_le_point_virgule_pour_excel(tmp_path):
     journal.enregistrer_controle(chemin, controler({"Z1": "rouge", "Z2": None, "Z3": "bleu"}),
                                  "2026-10-20 19:00:00")
     premiere_ligne = chemin.read_text(encoding="utf-8-sig").splitlines()[0]
-    assert premiere_ligne == "horodatage;verdict_global;zones_en_defaut;detail"
+    assert premiere_ligne == "horodatage;verdict_global;zones_en_defaut;detail;photo"
 
 
 def test_echec_d_ecriture_d_image_est_signale(tmp_path):
@@ -113,3 +113,22 @@ def test_echec_d_ecriture_d_image_est_signale(tmp_path):
     chemin = tmp_path / "dossier_absent" / "photo.jpg"
     with pytest.raises(RuntimeError):
         journal.ecrire_image(chemin, np.zeros((10, 10, 3), dtype=np.uint8))
+
+
+def test_journal_note_le_nom_de_la_photo(tmp_path):
+    chemin = tmp_path / "controles.csv"
+    nok = controler({"Z1": "rouge", "Z2": None, "Z3": "bleu"})
+    journal.enregistrer_controle(chemin, nok, "2026-10-21 19:40:00", "nok_2026-10-21_19-40-00.jpg")
+    journal.enregistrer_controle(chemin, controler({"Z1": "rouge", "Z2": "vert", "Z3": "bleu"}),
+                                 "2026-10-21 19:41:00")
+    lignes = journal.lire_journal(chemin)
+    assert lignes[0]["photo"] == "nok_2026-10-21_19-40-00.jpg"
+    assert lignes[1]["photo"] == ""
+
+
+def test_ancien_format_de_journal_est_refuse(tmp_path):
+    chemin = tmp_path / "controles.csv"
+    chemin.write_text("horodatage;verdict_global;zones_en_defaut;detail\n", encoding="utf-8-sig")
+    with pytest.raises(RuntimeError):
+        journal.enregistrer_controle(chemin, controler({"Z1": "rouge", "Z2": "vert", "Z3": "bleu"}),
+                                     "2026-10-21 19:42:00")

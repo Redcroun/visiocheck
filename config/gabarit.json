@@ -1,8 +1,8 @@
 {
+  "description": "Gabarit de référence : docs/gabarit_visiocheck_3_postit_A4.pdf (A4 paysage, 3 Post-it 76 x 76 mm). Positions en pixels calculées pour une image 640x480 où la feuille occupe toute la largeur ; chaque zone = carré de 70 mm centré dans son cadre. À recalibrer avec scripts/calibrer_zones.py pour sa caméra.",
   "zones": [
-    {"nom": "Z1", "x": 100, "y": 120, "largeur": 100, "hauteur": 100, "couleur_attendue": "rouge"},
-    {"nom": "Z2", "x": 220, "y": 120, "largeur": 100, "hauteur": 100, "couleur_attendue": "jaune"},
-    {"nom": "Z3", "x": 340, "y": 120, "largeur": 100, "hauteur": 100, "couleur_attendue": "vert"},
-    {"nom": "Z4", "x": 460, "y": 120, "largeur": 100, "hauteur": 100, "couleur_attendue": "bleu"}
+    {"nom": "Z1", "x": 38, "y": 173, "largeur": 151, "hauteur": 151, "couleur_attendue": "jaune"},
+    {"nom": "Z2", "x": 245, "y": 173, "largeur": 151, "hauteur": 151, "couleur_attendue": "vert"},
+    {"nom": "Z3", "x": 452, "y": 173, "largeur": 151, "hauteur": 151, "couleur_attendue": "bleu"}
   ]
 }

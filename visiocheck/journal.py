@@ -6,7 +6,7 @@ from pathlib import Path
 
 import cv2
 
-COLONNES = ["horodatage", "verdict_global", "zones_en_defaut", "detail"]
+COLONNES = ["horodatage", "verdict_global", "zones_en_defaut", "detail", "photo"]
 
 # Excel en français attend des « ; » entre les colonnes (la virgule y sert aux décimales).
 SEPARATEUR_COLONNES = ";"
@@ -21,11 +21,17 @@ def maintenant():
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
-def enregistrer_controle(chemin_csv, resultat, horodatage):
-    """Ajoute une ligne au journal CSV (crée le fichier et son en-tête si besoin)."""
+def enregistrer_controle(chemin_csv, resultat, horodatage, nom_photo=""):
+    """Ajoute une ligne au journal CSV (crée le fichier et son en-tête si besoin).
+
+    `nom_photo` : nom du fichier de la photo NOK (vide pour un contrôle OK).
+    Il fait le lien entre une ligne du journal et sa photo.
+    """
     chemin_csv = Path(chemin_csv)
     chemin_csv.parent.mkdir(parents=True, exist_ok=True)
     nouveau_fichier = not chemin_csv.exists()
+    if not nouveau_fichier:
+        verifier_entete(chemin_csv)
 
     defauts = [r for r in resultat["zones"] if r["verdict"] != "OK"]
     ligne = {
@@ -35,6 +41,7 @@ def enregistrer_controle(chemin_csv, resultat, horodatage):
         "zones_en_defaut": SEPARATEUR_ZONES.join(r["nom"] for r in defauts),
         # Ex. "Z2=MANQUANT,Z4=ERREUR(rouge)"
         "detail": SEPARATEUR_ZONES.join(_decrire_defaut(r) for r in defauts),
+        "photo": nom_photo,
     }
     # newline="" : évite les lignes vides en trop dans le CSV sous Windows.
     with open(chemin_csv, "a", newline="", encoding=ENCODAGE) as fichier:
@@ -42,6 +49,20 @@ def enregistrer_controle(chemin_csv, resultat, horodatage):
         if nouveau_fichier:
             ecrivain.writeheader()
         ecrivain.writerow(ligne)
+
+
+def verifier_entete(chemin_csv):
+    """Vérifie que le journal existant a les colonnes attendues.
+
+    Évite de mélanger deux formats dans le même fichier (ex. un journal créé
+    avant l'ajout de la colonne photo).
+    """
+    with open(chemin_csv, newline="", encoding=ENCODAGE) as fichier:
+        entete = fichier.readline().strip()
+    if entete != SEPARATEUR_COLONNES.join(COLONNES):
+        raise RuntimeError(
+            f"{chemin_csv} a un ancien format de colonnes ({entete}). "
+            "Renomme ou supprime cet ancien journal, un nouveau sera créé.")
 
 
 def _decrire_defaut(resultat_zone):
@@ -81,10 +102,8 @@ def lire_journal(chemin_csv):
     """Relit le journal CSV et renvoie la liste des lignes (dictionnaires)."""
     with open(chemin_csv, newline="", encoding=ENCODAGE) as fichier:
         lignes = list(csv.DictReader(fichier, delimiter=SEPARATEUR_COLONNES))
-    if lignes and "verdict_global" not in lignes[0]:
-        raise RuntimeError(
-            f"{chemin_csv} n'est pas au format attendu (colonnes séparées par « ; »). "
-            "Renomme ou supprime cet ancien journal.")
+    if lignes:
+        verifier_entete(chemin_csv)
     return lignes
 
 

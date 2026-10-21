@@ -26,20 +26,34 @@ COULEURS_BGR = {
 }
 
 
+# Écarts en pixels autour d'une zone, comme sur le gabarit imprimé (docs/) :
+# le Post-it (76 mm) déborde un peu de la zone (70 mm), le cadre noir (85 mm) l'entoure.
+DEBORD_PIECE = 6
+DEBORD_CADRE = 16
+
+
+def agrandir(zone, ecart):
+    """Renvoie les 2 coins du rectangle de la zone agrandi de `ecart` pixels de chaque côté."""
+    coin1 = (zone["x"] - ecart, zone["y"] - ecart)
+    coin2 = (zone["x"] + zone["largeur"] + ecart, zone["y"] + zone["hauteur"] + ecart)
+    return coin1, coin2
+
+
 def dessiner_gabarit(zones, pieces, largeur=640, hauteur=480):
-    """Dessine un fond blanc et une pièce colorée dans chaque zone.
+    """Dessine le gabarit (feuille blanche, cadres noirs, noms des zones) et les pièces posées.
 
     `pieces` associe un nom de zone à une couleur, ou à None pour un emplacement vide.
     """
-    image = np.full((hauteur, largeur, 3), 235, dtype=np.uint8)  # fond gris très clair
+    image = np.full((hauteur, largeur, 3), 245, dtype=np.uint8)  # feuille blanche
     for zone in zones:
+        coin1, coin2 = agrandir(zone, DEBORD_CADRE)
+        cv2.rectangle(image, coin1, coin2, (0, 0, 0), 2)
+        cv2.putText(image, zone["nom"], (coin1[0] + 2, coin1[1] - 8),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
         couleur = pieces.get(zone["nom"])
-        if couleur is None:
-            continue
-        marge = 15  # la pièce est un peu plus petite que la zone
-        coin1 = (zone["x"] + marge, zone["y"] + marge)
-        coin2 = (zone["x"] + zone["largeur"] - marge, zone["y"] + zone["hauteur"] - marge)
-        cv2.rectangle(image, coin1, coin2, COULEURS_BGR[couleur], -1)
+        if couleur is not None:
+            coin1, coin2 = agrandir(zone, DEBORD_PIECE)
+            cv2.rectangle(image, coin1, coin2, COULEURS_BGR[couleur], -1)
     return image
 
 
@@ -48,14 +62,15 @@ def main():
     dossier = configuration.chemin_projet("data/exemples")
     dossier.mkdir(parents=True, exist_ok=True)
 
+    if len(zones) < 2:
+        raise RuntimeError("Il faut au moins 2 zones dans config/gabarit.json pour créer la démo.")
+
     tout_bon = {z["nom"]: z["couleur_attendue"] for z in zones}
-    # NOK : 2e zone vide, dernière zone avec une pièce rouge à la place de l'attendue.
+    # NOK : 2e zone vide (MANQUANT) ; dernière zone avec la pièce de la 1re zone,
+    # comme une erreur de montage (ERREUR).
     defauts = dict(tout_bon)
     defauts[zones[1]["nom"]] = None
-    if zones[-1]["couleur_attendue"] != "rouge":
-        defauts[zones[-1]["nom"]] = "rouge"
-    else:
-        defauts[zones[-1]["nom"]] = "bleu"
+    defauts[zones[-1]["nom"]] = zones[0]["couleur_attendue"]
 
     ecrire_image(dossier / "demo_ok.png", dessiner_gabarit(zones, tout_bon))
     ecrire_image(dossier / "demo_nok.png", dessiner_gabarit(zones, defauts))

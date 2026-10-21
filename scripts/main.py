@@ -33,14 +33,19 @@ def controler(image, zones, couleurs, reglages, compteurs):
     image_annotee = affichage.dessiner_resultat(image, zones, resultat)
     horodatage = journal.maintenant()
     regl_journal = reglages["journal"]
-    journal.enregistrer_controle(
-        configuration.chemin_projet(regl_journal["fichier_csv"]), resultat, horodatage)
 
+    # La photo est enregistrée d'abord, pour pouvoir noter son nom dans le journal.
+    nom_photo = ""
     if resultat["verdict_global"] == "NOK":
         chemin = journal.sauvegarder_photo_nok(
             configuration.chemin_projet(regl_journal["dossier_nok"]), image_annotee, horodatage)
+        nom_photo = chemin.name
+    journal.enregistrer_controle(
+        configuration.chemin_projet(regl_journal["fichier_csv"]), resultat, horodatage, nom_photo)
+
+    if nom_photo:
         defauts = ", ".join(f'{r["nom"]} {r["verdict"]}' for r in detection.zones_en_defaut(resultat))
-        print(f"{horodatage}  NOK ({defauts})  photo : {chemin.name}")
+        print(f"{horodatage}  NOK ({defauts})  photo : {nom_photo}")
     else:
         print(f"{horodatage}  OK")
     return image_annotee

@@ -97,7 +97,10 @@ def main():
             if not zones:
                 print("Aucune zone à enregistrer.")
                 continue
-            configuration.ecrire_json("gabarit.json", {"zones": zones})
+            # On ne remplace que les zones : la description du gabarit est conservée.
+            gabarit = configuration.lire_json("gabarit.json")
+            gabarit["zones"] = zones
+            configuration.ecrire_json("gabarit.json", gabarit)
             print(f"{len(zones)} zone(s) enregistrée(s) dans config/gabarit.json")
             break
         elif touche == ord("q"):
