@@ -82,11 +82,28 @@ python -m pytest
 ```
 
 ## Résultats mesurés
-_Taux de bonne détection à mesurer (phase 5)._
+**Séance de test du 22/10/2026** : gabarit de référence (3 Post-it : Z1 jaune, Z2 vert, Z3 bleu),
+iPhone fixe utilisé comme webcam (DroidCam, 640x480), lampe de bureau fixe.
+
+| | Nombre |
+|---|---|
+| Contrôles | 10 |
+| OK | 4 |
+| NOK | 6 (défauts provoqués volontairement) |
+| Verdicts conformes à la réalité | **10 / 10** |
+
+- Défauts testés : Post-it manquant (Z2, Z3) et Post-it inversés entre Z1 et Z3 (erreur de montage).
+- Chaque NOK a été vérifié sur sa photo : bonne zone et bonne cause (« vu : bleu », « vu : jaune »).
+- Les mêmes situations ont été répétées 3 fois, avec le même verdict à chaque fois (répétabilité).
+
+**Ce que ce résultat ne prouve pas encore** : une seule séance, un seul éclairage, un petit volume.
+La mesure complète de fiabilité (30 à 50 photos, lumière variable) est prévue en phase 5.
 
 ## Limites
 - Les plages HSV dépendent de l'éclairage : à recalibrer si la lumière change.
 - Les zones sont fixes : le gabarit ne doit pas bouger par rapport à la caméra.
+- Le noir, le blanc et le gris ne sont pas des couleurs pour le HSV : une pièce noire serait vue comme « MANQUANT ».
+- Le contrôle doit être déclenché main sortie du champ : la peau peut être prise pour du jaune ou du rouge.
 
 ## Pistes d'amélioration
 _À compléter._
