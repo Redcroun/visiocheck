@@ -6,9 +6,11 @@ Utilisation :
 
 Déroulé :
     1. (webcam) espace = figer l'image
-    2. cliquer-glisser pour dessiner une zone
+    2. cliquer-glisser pour dessiner une zone, dans l'ordre Z1, Z2, Z3...
+       (les zones sont nommées dans l'ordre où on les dessine)
     3. taper la 1re lettre de la couleur attendue (r = rouge, j = jaune, v = vert, b = bleu)
-    4. z = annuler la dernière zone, e = enregistrer, q = quitter sans enregistrer
+    4. z = annuler la dernière zone, e = enregistrer
+    q ou la croix de la fenêtre = quitter sans enregistrer, à tout moment
 """
 
 import sys
@@ -44,21 +46,28 @@ def gerer_souris(evenement, x, y, drapeaux, parametre):
 
 
 def obtenir_image_de_reference():
-    """Renvoie l'image sur laquelle on dessine : fichier en argument, ou webcam figée."""
+    """Renvoie l'image sur laquelle on dessine : fichier en argument, ou webcam figée.
+
+    Renvoie None si l'utilisateur quitte (q ou croix) pendant l'aperçu.
+    """
     reglages = configuration.charger_reglages()
     image_fichier, camera = ouvrir_source(sys.argv[1:], reglages["camera"])
     if image_fichier is not None:
         return image_fichier
 
-    print("Place le gabarit sous la caméra, puis appuie sur espace pour figer l'image.")
+    print("Place le gabarit sous la caméra, puis appuie sur espace pour figer l'image (q = quitter).")
     while True:
         image = lire_image(camera)
         apercu = image.copy()
-        affichage.ecrire(apercu, "espace : figer l'image", (10, 25))
+        affichage.ecrire(apercu, "espace : figer l'image   q : quitter", (10, 25))
         cv2.imshow(NOM_FENETRE, apercu)
-        if cv2.waitKey(30) & 0xFF == ord(" "):
+        touche = cv2.waitKey(30) & 0xFF
+        if touche == ord(" "):
             liberer(camera)
             return image
+        if touche == ord("q") or affichage.fenetre_fermee(NOM_FENETRE):
+            liberer(camera)
+            return None
 
 
 def main():
@@ -68,6 +77,10 @@ def main():
     texte_couleurs = "  ".join(f"{nom[0]}={nom}" for nom in couleurs)
 
     image = obtenir_image_de_reference()
+    if image is None:
+        print("Quitté sans enregistrer.")
+        cv2.destroyAllWindows()
+        return
     zones = []
     cv2.namedWindow(NOM_FENETRE)
     cv2.setMouseCallback(NOM_FENETRE, gerer_souris)
@@ -103,7 +116,7 @@ def main():
             configuration.ecrire_json("gabarit.json", gabarit)
             print(f"{len(zones)} zone(s) enregistrée(s) dans config/gabarit.json")
             break
-        elif touche == ord("q"):
+        elif touche == ord("q") or affichage.fenetre_fermee(NOM_FENETRE):
             print("Quitté sans enregistrer.")
             break
 

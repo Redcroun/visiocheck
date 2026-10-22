@@ -1,49 +1,27 @@
-"""Test de la webcam : affiche le flux vidéo avec les FPS.
+"""Test de la caméra : affiche le flux vidéo, son format réel et les FPS.
+
+La caméra utilisée est celle de config/reglages.json (index, backend, MJPG),
+c'est-à-dire exactement la même que pour main.py, calibrer_zones.py et hsv_picker.py.
 
 Utilisation (PowerShell, venv activé) :
-    python scripts/test_camera.py        # caméra n°0
-    python scripts/test_camera.py 1      # autre caméra (ex. webcam USB)
+    python scripts/test_camera.py        # caméra de config/reglages.json
+    python scripts/test_camera.py 0      # forcer un autre index (ex. webcam intégrée)
 
-Touche q : quitter.
+Touche q ou croix de la fenêtre : quitter.
 """
 
 import sys
 import time
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import cv2
 
+from visiocheck import affichage, configuration
+from visiocheck.camera import liberer, lire_image, ouvrir_camera
+
 NOM_FENETRE = "VisioCheck - test camera"
-
-# Format vidéo demandé à la webcam.
-# True  : MJPG (images compressées) -> souvent bien plus de FPS en USB.
-# False : format par défaut de la caméra (souvent YUY2, non compressé).
-# Passe à False pour comparer les FPS avant / après.
-UTILISER_MJPG = True
-
-
-def lire_index_camera():
-    """Renvoie l'index de caméra passé en argument, ou 0 par défaut."""
-    if len(sys.argv) > 1:
-        return int(sys.argv[1])
-    return 0
-
-
-def ouvrir_camera(index):
-    """Ouvre la caméra ; arrête le programme avec un message clair en cas d'échec."""
-    # CAP_DSHOW (DirectShow) : sous Windows, la webcam s'ouvre souvent bien plus vite ainsi.
-    camera = cv2.VideoCapture(index, cv2.CAP_DSHOW)
-    if not camera.isOpened():
-        print(f"Erreur : impossible d'ouvrir la caméra n°{index}.")
-        print("- Vérifie qu'elle est branchée et qu'aucune autre appli (Teams, Zoom…) ne l'utilise.")
-        print("- Essaie un autre index : python scripts/test_camera.py 1")
-        sys.exit(1)
-    return camera
-
-
-def demander_mjpg(camera):
-    """Demande à la caméra d'envoyer ses images au format compressé MJPG."""
-    # Un « FOURCC » est un code de 4 lettres qui désigne un format vidéo.
-    camera.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
 
 
 def decrire_format(camera):
@@ -56,45 +34,48 @@ def decrire_format(camera):
     return f"format {lettres}, {largeur}x{hauteur}"
 
 
+def lire_index(index_par_defaut):
+    """Renvoie l'index passé en argument (pratique pour essayer une autre caméra), sinon celui des réglages."""
+    if len(sys.argv) < 2:
+        return index_par_defaut
+    if not sys.argv[1].isdigit():
+        raise RuntimeError(f"L'index de caméra doit être un nombre (ex. 0 ou 1), pas « {sys.argv[1]} ».")
+    return int(sys.argv[1])
+
+
 def main():
-    index = lire_index_camera()
-    camera = ouvrir_camera(index)
-    if UTILISER_MJPG:
-        demander_mjpg(camera)
-    print(f"Caméra ouverte ({decrire_format(camera)}).")
+    reglages_camera = configuration.charger_reglages()["camera"]
+    index = lire_index(reglages_camera["index"])
+    camera = ouvrir_camera(index, reglages_camera["utiliser_mjpg"], reglages_camera["backend"])
+    print(f"Caméra n°{index} ouverte en {reglages_camera['backend']} ({decrire_format(camera)}).")
     print("Appuie sur q dans la fenêtre vidéo pour quitter.")
 
     instant_precedent = time.perf_counter()
     fps = 0.0
-
     while True:
-        lecture_ok, image = camera.read()
-        if not lecture_ok:
-            print("Erreur : la caméra ne renvoie plus d'image.")
-            break
+        image = lire_image(camera)
 
-        # Calcul des FPS : 1 / durée entre deux images, lissé pour éviter que le chiffre saute.
+        # FPS : 1 / durée entre deux images, lissé pour éviter que le chiffre saute.
+        # Attention : avec MSMF, la même image peut être relue plusieurs fois,
+        # ce chiffre mesure alors la vitesse de la boucle (voir docs/notes_apprentissage.md).
         maintenant = time.perf_counter()
-        fps_instantane = 1.0 / (maintenant - instant_precedent)
+        fps = 0.9 * fps + 0.1 / (maintenant - instant_precedent)
         instant_precedent = maintenant
-        fps = 0.9 * fps + 0.1 * fps_instantane
 
-        cv2.putText(image, f"FPS : {fps:.1f}", (10, 30),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
+        affichage.ecrire(image, f"FPS : {fps:.1f}", (10, 30), affichage.VERT, 0.8, 2)
         cv2.imshow(NOM_FENETRE, image)
-
-        touche = cv2.waitKey(1) & 0xFF
-        if touche == ord("q"):
-            break
-        # Fermeture de la fenêtre avec la croix : on quitte aussi.
-        if cv2.getWindowProperty(NOM_FENETRE, cv2.WND_PROP_VISIBLE) < 1:
+        if cv2.waitKey(1) & 0xFF == ord("q") or affichage.fenetre_fermee(NOM_FENETRE):
             break
 
     print(f"FPS moyen en fin de test : {fps:.1f}")
-    camera.release()
+    liberer(camera)
     cv2.destroyAllWindows()
     print("Caméra libérée, fin du test.")
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except RuntimeError as erreur:
+        print(f"Erreur : {erreur}")
+        sys.exit(1)

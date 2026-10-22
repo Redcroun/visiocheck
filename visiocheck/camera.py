@@ -1,5 +1,7 @@
 """Ouverture de la webcam."""
 
+import time
+
 import cv2
 
 # Systèmes vidéo de Windows (« backends ») utilisables pour ouvrir la caméra.
@@ -29,12 +31,25 @@ def ouvrir_camera(index, utiliser_mjpg=True, backend="DSHOW"):
     return camera
 
 
+# Tolérance aux coupures courtes (ex. iPhone en Wi-Fi via DroidCam qui rate une image) :
+# on réessaie jusqu'à 30 fois, toutes les 0,03 s, soit environ 1 seconde avant d'abandonner.
+NB_ESSAIS_LECTURE = 30
+PAUSE_ENTRE_ESSAIS = 0.03
+
+
 def lire_image(camera):
-    """Lit une image de la caméra ; lève une erreur si la caméra ne répond plus."""
-    lecture_ok, image = camera.read()
-    if not lecture_ok:
-        raise RuntimeError("La caméra ne renvoie plus d'image.")
-    return image
+    """Lit une image de la caméra.
+
+    Une image ratée de temps en temps est normale : on réessaie quelques fois.
+    On ne lève une erreur que si la caméra reste muette pendant environ 1 seconde.
+    """
+    for _ in range(NB_ESSAIS_LECTURE):
+        lecture_ok, image = camera.read()
+        if lecture_ok:
+            return image
+        time.sleep(PAUSE_ENTRE_ESSAIS)
+    raise RuntimeError("La caméra ne renvoie plus d'image depuis environ 1 seconde "
+                       "(caméra débranchée, DroidCam arrêté ou Wi-Fi coupé ?).")
 
 
 def charger_image_fichier(chemin):

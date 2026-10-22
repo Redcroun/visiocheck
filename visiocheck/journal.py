@@ -6,6 +6,8 @@ from pathlib import Path
 
 import cv2
 
+from visiocheck.detection import ERREUR, OK, zones_en_defaut
+
 COLONNES = ["horodatage", "verdict_global", "zones_en_defaut", "detail", "photo"]
 
 # Excel en français attend des « ; » entre les colonnes (la virgule y sert aux décimales).
@@ -33,7 +35,7 @@ def enregistrer_controle(chemin_csv, resultat, horodatage, nom_photo=""):
     if not nouveau_fichier:
         verifier_entete(chemin_csv)
 
-    defauts = [r for r in resultat["zones"] if r["verdict"] != "OK"]
+    defauts = zones_en_defaut(resultat)
     ligne = {
         "horodatage": horodatage,
         "verdict_global": resultat["verdict_global"],
@@ -67,7 +69,7 @@ def verifier_entete(chemin_csv):
 
 def _decrire_defaut(resultat_zone):
     """Texte court décrivant le défaut d'une zone."""
-    if resultat_zone["verdict"] == "ERREUR":
+    if resultat_zone["verdict"] == ERREUR:
         return f'{resultat_zone["nom"]}=ERREUR({resultat_zone["couleur_detectee"]})'
     return f'{resultat_zone["nom"]}={resultat_zone["verdict"]}'
 
@@ -113,7 +115,7 @@ def calculer_synthese(lignes):
     `lignes` est la liste renvoyée par lire_journal().
     """
     total = len(lignes)
-    nb_ok = sum(1 for ligne in lignes if ligne["verdict_global"] == "OK")
+    nb_ok = sum(1 for ligne in lignes if ligne["verdict_global"] == OK)
 
     defauts_par_zone = {}
     par_heure = {}
@@ -123,7 +125,7 @@ def calculer_synthese(lignes):
         heure = ligne["horodatage"][11:13] + "h"  # "2026-10-19 14:42:05" -> "14h"
         compte = par_heure.setdefault(heure, {"total": 0, "OK": 0})
         compte["total"] += 1
-        if ligne["verdict_global"] == "OK":
+        if ligne["verdict_global"] == OK:
             compte["OK"] += 1
 
     # Tri du plus grand nombre de défauts au plus petit.

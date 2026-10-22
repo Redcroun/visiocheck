@@ -51,11 +51,6 @@ def controler(image, zones, couleurs, reglages, compteurs):
     return image_annotee
 
 
-def fenetre_fermee():
-    """Vrai si l'utilisateur a fermé la fenêtre avec la croix."""
-    return cv2.getWindowProperty(NOM_FENETRE, cv2.WND_PROP_VISIBLE) < 1
-
-
 def main():
     zones = configuration.charger_zones()
     couleurs = configuration.charger_couleurs()
@@ -88,7 +83,7 @@ def main():
         cv2.imshow(NOM_FENETRE, ecran)
 
         touche = cv2.waitKey(30) & 0xFF
-        if touche == ord("q") or fenetre_fermee():
+        if touche == ord("q") or affichage.fenetre_fermee(NOM_FENETRE):
             break
         if touche == ord(" "):
             resultat_affiche = controler(image, zones, couleurs, reglages, compteurs)

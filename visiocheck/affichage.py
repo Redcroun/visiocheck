@@ -19,12 +19,26 @@ def ecrire(image, texte, position, couleur=BLANC, taille=0.5, epaisseur=1):
     cv2.putText(image, texte, (x, y), POLICE, taille, couleur, epaisseur, cv2.LINE_AA)
 
 
+def coins(zone, ecart=0):
+    """Renvoie les 2 coins (haut-gauche, bas-droit) du rectangle d'une zone.
+
+    `ecart` agrandit le rectangle de ce nombre de pixels de chaque côté (0 = la zone exacte).
+    """
+    coin1 = (zone["x"] - ecart, zone["y"] - ecart)
+    coin2 = (zone["x"] + zone["largeur"] + ecart, zone["y"] + zone["hauteur"] + ecart)
+    return coin1, coin2
+
+
+def fenetre_fermee(nom_fenetre):
+    """Vrai si l'utilisateur a fermé la fenêtre avec la croix."""
+    return cv2.getWindowProperty(nom_fenetre, cv2.WND_PROP_VISIBLE) < 1
+
+
 def dessiner_zones(image, zones):
     """Dessine les zones en gris avec leur nom et la couleur attendue (mode attente)."""
     copie = image.copy()
     for zone in zones:
-        coin1 = (zone["x"], zone["y"])
-        coin2 = (zone["x"] + zone["largeur"], zone["y"] + zone["hauteur"])
+        coin1, coin2 = coins(zone)
         cv2.rectangle(copie, coin1, coin2, GRIS, 2)
         ecrire(copie, f'{zone["nom"]} : {zone["couleur_attendue"]}',
                (zone["x"], zone["y"] - 8), GRIS)
@@ -36,8 +50,7 @@ def dessiner_resultat(image, zones, resultat):
     copie = image.copy()
     for zone, res in zip(zones, resultat["zones"]):
         couleur = VERT if res["verdict"] == "OK" else ROUGE
-        coin1 = (zone["x"], zone["y"])
-        coin2 = (zone["x"] + zone["largeur"], zone["y"] + zone["hauteur"])
+        coin1, coin2 = coins(zone)
         cv2.rectangle(copie, coin1, coin2, couleur, 3)
         ecrire(copie, f'{res["nom"]} {res["verdict"]}', (zone["x"], zone["y"] - 8), couleur)
         if res["verdict"] == "ERREUR":

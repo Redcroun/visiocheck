@@ -15,6 +15,7 @@ import cv2
 import numpy as np
 
 from visiocheck import configuration
+from visiocheck.affichage import coins
 from visiocheck.journal import ecrire_image
 
 # Couleurs « pures » en BGR pour dessiner les pièces virtuelles.
@@ -32,13 +33,6 @@ DEBORD_PIECE = 6
 DEBORD_CADRE = 16
 
 
-def agrandir(zone, ecart):
-    """Renvoie les 2 coins du rectangle de la zone agrandi de `ecart` pixels de chaque côté."""
-    coin1 = (zone["x"] - ecart, zone["y"] - ecart)
-    coin2 = (zone["x"] + zone["largeur"] + ecart, zone["y"] + zone["hauteur"] + ecart)
-    return coin1, coin2
-
-
 def dessiner_gabarit(zones, pieces, largeur=640, hauteur=480):
     """Dessine le gabarit (feuille blanche, cadres noirs, noms des zones) et les pièces posées.
 
@@ -46,13 +40,13 @@ def dessiner_gabarit(zones, pieces, largeur=640, hauteur=480):
     """
     image = np.full((hauteur, largeur, 3), 245, dtype=np.uint8)  # feuille blanche
     for zone in zones:
-        coin1, coin2 = agrandir(zone, DEBORD_CADRE)
+        coin1, coin2 = coins(zone, DEBORD_CADRE)
         cv2.rectangle(image, coin1, coin2, (0, 0, 0), 2)
         cv2.putText(image, zone["nom"], (coin1[0] + 2, coin1[1] - 8),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
         couleur = pieces.get(zone["nom"])
         if couleur is not None:
-            coin1, coin2 = agrandir(zone, DEBORD_PIECE)
+            coin1, coin2 = coins(zone, DEBORD_PIECE)
             cv2.rectangle(image, coin1, coin2, COULEURS_BGR[couleur], -1)
     return image
 

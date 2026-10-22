@@ -5,7 +5,7 @@ Utilisation :
     python scripts/hsv_picker.py data/exemples/photo.png  # image fichier
 
 Clic gauche : affiche la moyenne H, S, V d'un carré de 5x5 pixels autour du clic.
-Touche q : quitter.
+Touche q ou croix de la fenêtre : quitter.
 """
 
 import sys
@@ -61,7 +61,7 @@ def main():
             cv2.circle(ecran, (x, y), 6, affichage.BLANC, 2)
             affichage.ecrire(ecran, f"H={h}  S={s}  V={v}", (10, 25))
         cv2.imshow(NOM_FENETRE, ecran)
-        if cv2.waitKey(30) & 0xFF == ord("q"):
+        if cv2.waitKey(30) & 0xFF == ord("q") or affichage.fenetre_fermee(NOM_FENETRE):
             break
 
     liberer(camera)
